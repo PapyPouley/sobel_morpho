@@ -1,0 +1,123 @@
+name: C/C++ CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-and-test_Ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout git file
+      uses: actions/checkout@v4
+
+    - name: Install dependency
+      run: |
+        sudo apt update 
+        sudo apt install -y libsdl2-dev 
+        sudo apt install -y libsdl2-ttf-dev 
+        
+    - name: Create Build folder
+      run: mkdir build
+      
+    - name: Compile CmakeList
+      working-directory: build
+      run: |
+        cmake ..
+        make
+        ls
+        
+    - name: Run Sobel Program
+      run: |
+        ls
+        ./build/Release/sobel
+        ./build/Release/tests
+  
+  build-and-test_Windows:
+    runs-on: windows-latest
+
+    steps:
+    # Étape 1 : Récupération des sources
+    - name: Checkout git files
+      uses: actions/checkout@v4
+
+    # Étape 2 : Installation des dépendances (CMake et outils)
+    - name: Install dependencies
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+        choco install make -y
+    # Étape 3 : Création du dossier de compilation
+    - name: Create Build folder
+      run: mkdir build
+
+    # Étape 4 : Compilation avec CMake
+    - name: Compile with CMake
+      working-directory: build
+      run: |
+        cmake ..
+        cmake --build . --config Release
+    # Étape 5 : Exécution du programme
+    - name: Dir info
+      run: |
+        dir 
+        dir build\
+        dir build\Release
+    - name: Run program
+      run: build\Release\sobel.exe
+
+  build-and-test_matrice:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    # Étape 1 : Récupération des sources
+    - name: Checkout git files
+      uses: actions/checkout@v4
+
+    # Étapes spécifiques selon l'OS
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt update 
+        sudo apt install -y libsdl2-dev 
+        sudo apt install -y libsdl2-ttf-dev 
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+        choco install make -y
+    # Étape 2 : Création du dossier de compilation
+    - name: Create Build folder
+      run: mkdir build
+
+    # Étape 3 : Compilation
+    - name: Compile with CMake (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      working-directory: build
+      run: |
+        cmake ..
+        make
+        ls
+    - name: Compile with CMake (Windows)
+      if: matrix.os == 'windows-latest'
+      working-directory: build
+      run: |
+        cmake ..
+        cmake --build . --config Release
+        dir
+    # Étape 4 : Exécution du programme
+    - name: Run Sobel Program (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        ls
+        ./build/Release/sobel
+    - name: Run Sobel Program (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        dir
+        dir build\Release
+        build\Release\sobel.exe
